@@ -1,0 +1,3 @@
+ofxGui
+ofxNI2
+ofxThreadedImageLoader
