@@ -3,6 +3,8 @@
 #include "ofMain.h"
 #include "ofxNI2.h"
 #include "ofxNiTE2.h"
+#include "ofxGui.h"
+#include "LatentSpace.hpp"
 
 class ofApp : public ofBaseApp{
 
@@ -25,16 +27,23 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 	
+		// GUI for params
+		ofxPanel gui;
+	
+		ofxToggle RAW_DEPTH;
+		ofxVec2Slider TRANSLATE;
+		ofxFloatSlider ZOOM;
+		ofxFloatSlider DEPTH_TOLERANCE; //0.7
+		ofxVec2Slider DEPTH; //0, 2500
+	
 		// Kinect
 		ofxNI2::Device device;
 		ofxNiTE2::UserTracker tracker;
 		
-		// Video
-		ofVideoPlayer wrapper;
+		// Latent space data
+		LatentSpace latentSpace = LatentSpace("latent");
 	
 		// fbo
 		ofFbo fbo;
-
 		ofImage result;
-		ofImage texture;
 };

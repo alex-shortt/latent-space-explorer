@@ -22,6 +22,7 @@
 		E4B69E200A3A1BDC003C02F2 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4B69E1D0A3A1BDC003C02F2 /* main.cpp */; };
 		E4B69E210A3A1BDC003C02F2 /* ofApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4B69E1E0A3A1BDC003C02F2 /* ofApp.cpp */; };
 		F87E1B4421D97F6038E56EB4 /* ofxGuiGroup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2B86D2BF7F96E40C11B9F9B /* ofxGuiGroup.cpp */; };
+		FAA4BEB6241EF5540030DBE7 /* LatentSpace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FAA4BEB4241EF5540030DBE7 /* LatentSpace.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -275,6 +276,8 @@
 		F03337C7058DEB2406FD1FC7 /* ofxThreadedImageLoader.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ofxThreadedImageLoader.h; path = ../of_v0.11.0_osx_release/addons/ofxThreadedImageLoader/src/ofxThreadedImageLoader.h; sourceTree = SOURCE_ROOT; };
 		F1AE3D6E43BC681557FA8546 /* NiTE.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = NiTE.h; path = ../of_v0.11.0_osx_release/addons/ofxNI2/libs/NiTE2/include/NiTE.h; sourceTree = SOURCE_ROOT; };
 		F55AA9EB7E6EE1ABE8ACBFBB /* ofxToggle.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ofxToggle.h; path = ../of_v0.11.0_osx_release/addons/ofxGui/src/ofxToggle.h; sourceTree = SOURCE_ROOT; };
+		FAA4BEB4241EF5540030DBE7 /* LatentSpace.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = LatentSpace.cpp; sourceTree = "<group>"; };
+		FAA4BEB5241EF5540030DBE7 /* LatentSpace.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = LatentSpace.hpp; sourceTree = "<group>"; };
 		FE358ABB8179338B36608741 /* OniPlatform.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = OniPlatform.h; path = ../of_v0.11.0_osx_release/addons/ofxNI2/libs/OpenNI2/include/ni2/OniPlatform.h; sourceTree = SOURCE_ROOT; };
 		FFA67BD106C5ADE980991FA5 /* ofxGuiGroup.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ofxGuiGroup.h; path = ../of_v0.11.0_osx_release/addons/ofxGui/src/ofxGuiGroup.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -807,6 +810,8 @@
 				E4B69E1D0A3A1BDC003C02F2 /* main.cpp */,
 				E4B69E1E0A3A1BDC003C02F2 /* ofApp.cpp */,
 				E4B69E1F0A3A1BDC003C02F2 /* ofApp.h */,
+				FAA4BEB4241EF5540030DBE7 /* LatentSpace.cpp */,
+				FAA4BEB5241EF5540030DBE7 /* LatentSpace.hpp */,
 			);
 			path = src;
 			sourceTree = SOURCE_ROOT;
@@ -940,6 +945,7 @@
 				E4B69E210A3A1BDC003C02F2 /* ofApp.cpp in Sources */,
 				6C23A4AE4EEFB456A1040460 /* ofxBaseGui.cpp in Sources */,
 				DC6B6BFE137B4FA15986B035 /* ofxButton.cpp in Sources */,
+				FAA4BEB6241EF5540030DBE7 /* LatentSpace.cpp in Sources */,
 				2E338C9AD2F5C0BA56D035BB /* ofxColorPicker.cpp in Sources */,
 				F87E1B4421D97F6038E56EB4 /* ofxGuiGroup.cpp in Sources */,
 				9C81D6B37FEBB175EC9704F8 /* ofxInputField.cpp in Sources */,

@@ -1,43 +1,50 @@
 #include "ofApp.h"
 
-#include "ofxNI2.h"
-
-ofEasyCam cam;
-
-size_t SCREEN_W;
-size_t SCREEN_H;
-
-bool showDebugging = true;
-int RAW_DEPTH = false;
-int TRANSLATE_Y = 20;
-int TRANSLATE_X = 0;
-float ZOOM = 1.05;
-float TOLERANCE = 0.7;
-int NEAR = 0;
-int FAR = 2500;
-
-ofVec3f latentPos;
+// cover image onto passed image, centered
+void coverOnImage(ofImage &child, ofImage &parent){
+	// find scale factor
+	float scaleX = parent.getWidth() / child.getWidth();
+	float scaleY = parent.getHeight() / child.getHeight();
+	float scale = scaleX > scaleY ? scaleX : scaleY;
+	
+	// find new dimensions, apply to child
+	float newWidth = child.getWidth() * scale;
+	float newHeight = child.getHeight() * scale;
+	child.resize(newWidth, newHeight);
+	
+	// find space offset
+	float diffW = (newWidth - parent.getWidth()) / 2.0f;
+	float diffH = (newHeight - parent.getHeight()) / 2.0f;
+	
+	// apply space offset to crop
+	child.crop(diffW, diffH, parent.getWidth(), parent.getHeight());
+}
 
 //--------------------------------------------------------------
 void ofApp::setup()
 {
-	SCREEN_W = ofGetScreenWidth();
-	SCREEN_H = ofGetScreenHeight();
-	
 	ofSetFrameRate(60);
 	ofSetVerticalSync(true);
 	ofBackground(0);
 	
-	fbo.allocate((int) SCREEN_W, (int) SCREEN_H, GL_RGBA);
+	// GUI
+	gui.setup();
+	gui.add(RAW_DEPTH.setup("Raw Depth", false));
+	gui.add(TRANSLATE.setup("Translate", {-97.9, 36.7}, {-200, -200}, {200, 200}));
+	gui.add(ZOOM.setup("Zoom", 1.62, 0, 3));
+	gui.add(DEPTH.setup("Depth (NEAR, FAR)", {-440, 2500}, {-1000, 500}, {1000, 4500}));
+	gui.add(DEPTH_TOLERANCE.setup("Depth Tolerance", 0.5f, 0, 1));
+		
+	// Latent Space data
+	latentSpace.setXBounds(-700, 450);
+	latentSpace.setYBounds(-200, 150);
+	latentSpace.setZBounds(-DEPTH->x, DEPTH->y);
 	
-	texture.allocate(200, 200, OF_IMAGE_COLOR);
-	texture.load("latent/0.0-0.0-0.0.jpg");
+	// Fbo / textures
+	fbo.allocate(ofGetScreenWidth(), ofGetScreenHeight(), GL_RGBA);
+	result.allocate(640, 480, OF_IMAGE_COLOR);
 	
-	wrapper.load("movies/waves.mp4");
-	wrapper.play();
-	
-	result.allocate(wrapper.getWidth(), wrapper.getHeight(), OF_IMAGE_COLOR);
-
+	// Kinect setup
 	device.setLogLevel(OF_LOG_NOTICE);
 	device.setup(0);
 	tracker.setup(device);
@@ -53,41 +60,15 @@ void ofApp::exit()
 void ofApp::update()
 {
 	device.update();
-		
-	size_t numUsers = tracker.getNumUser();
-		
-	for(size_t u = 0; u < numUsers; u++) {
-		// only do the first one
-		if(u > 1) {
-			continue;
-		}
-		
-		ofxNiTE2::User::Ref user = tracker.getUser(u);
-		
-		ofVec3f center = user->getCenterOfMass();
-		
-		float x_perc = ofClamp(ofMap(center.x, -700, 400, 0, 1), 0, 1);
-		float y_perc = ofClamp(ofMap(center.y, -700, 400, 0, 1), 0, 1);
-		float z_perc = ofClamp(ofMap(center.z, -FAR, NEAR, 0, 1), 0, 1);
-		
-		x_perc = roundf(x_perc * 10) / 10;
-		y_perc = roundf(y_perc * 10) / 10;
-		z_perc = roundf(z_perc * 10) / 10;
-		
-		string x_string = ofToString(x_perc, 1);
-		string y_string = ofToString(y_perc, 1);
-		string z_string = ofToString(z_perc, 1);
-		
-		if(latentPos.distance(ofVec3f(x_perc, y_perc, z_perc)) > 0){
-			latentPos.set(x_perc, y_perc, z_perc);
-			texture.load("latent/" + x_string + "-" + y_string + "-" + z_string + ".jpg");
-			texture.update();
-		}
-		
-	}
 	
-//	texture.load("latent/0.0-0.0-0.0.jpg");
-	wrapper.update();
+	// update latent space based on first user
+	size_t numUsers = tracker.getNumUser();
+	for(size_t u = 0; u < numUsers; u++) {
+		if(u > 1) continue; // only do the first one
+		ofxNiTE2::User::Ref user = tracker.getUser(u);
+		ofVec3f center = user->getCenterOfMass();
+		latentSpace.updatePosition(center);
+	}
 }
 
 ofVec4f getUserBounds(ofxNiTE2::User::Ref user, float minConfidence){
@@ -121,33 +102,30 @@ ofVec4f getUserBounds(ofxNiTE2::User::Ref user, float minConfidence){
 void ofApp::draw()
 {
 	// setup video frame, deptht data
-	ofPixels framePixels = texture.getPixels();
-	ofImage *depthImage = new ofImage(tracker.getPixelsRef(NEAR, FAR));
-	depthImage->resize((int) framePixels.getWidth(), (int) framePixels.getHeight());
-	ofPixels depthPixels = depthImage->getPixels();
-	delete depthImage;
+	ofImage depthImage = ofImage(tracker.getPixelsRef(DEPTH->x, DEPTH->y));
+	ofPixels depthPixels = depthImage.getPixels();
+	
+	ofImage latentImage = ofImage(latentSpace.getImage());
+	coverOnImage(latentImage, depthImage); // resize latent image to depth image
+	ofPixels latentPixels = latentImage.getPixels();
 	
 	result.setColor(ofColor::black);
 	
-	bool depthReady = depthPixels.size() * 3 == framePixels.size();
-	
 	// resize/recolor video
-	if(depthReady) {
-		for (int y = 0; y < framePixels.getHeight(); y++) {
-			for (int x = 0; x < framePixels.getWidth(); x++) {
-				
-				ofColor c = framePixels.getColor(x, y);
-				ofColor depth = depthPixels.getColor(x, y);
-				
-				float dist = depth.r / 255.0;
-				
-				if (RAW_DEPTH){
-					result.setColor( x, y , depth);
-				} else if(dist < 1 && dist > TOLERANCE){
-					result.setColor( x, y , c);
-				}
-				
+	for (int y = 0; y < latentPixels.getHeight(); y++) {
+		for (int x = 0; x < latentPixels.getWidth(); x++) {
+			
+			ofColor c = latentPixels.getColor(x, y);
+			ofColor depth = depthPixels.getColor(x, y);
+			
+			float dist = depth.r / 255.0;
+			
+			if (RAW_DEPTH){
+				result.setColor( x, y , depth);
+			} else if(dist < 1 && dist > DEPTH_TOLERANCE){
+				result.setColor( x, y , c);
 			}
+			
 		}
 	}
 	
@@ -157,8 +135,8 @@ void ofApp::draw()
 		ofClear(255,255,255, 0);
 		
 		// get scale measurments
-		float scaleX = (float) SCREEN_W / (float) result.getWidth();
-		float scaleY = (float) SCREEN_H / (float) result.getHeight();
+		float scaleX = (float) ofGetScreenWidth()/ (float) result.getWidth();
+		float scaleY = (float) ofGetScreenHeight()/ (float) result.getHeight();
 		float scale = scaleX > scaleY ? scaleX : scaleY;
 		scale *= ZOOM;
 		
@@ -168,8 +146,9 @@ void ofApp::draw()
 	
 		// move based on settings
 		ofScale(scale);
-		ofTranslate(TRANSLATE_X, TRANSLATE_Y);
-	
+		ofTranslate(TRANSLATE->x, TRANSLATE->y);
+		
+		result.mirror(false, true);
 		result.draw(0,0);
     fbo.end();
 
@@ -178,10 +157,7 @@ void ofApp::draw()
 	size_t numUsers = tracker.getNumUser();
 		
 	for(size_t u = 0; u < numUsers; u++) {
-		// only do the first one
-		if(u > 1) {
-			continue;
-		}
+		if(u > 1) continue; // only do the first one
 		
 		ofxNiTE2::User::Ref user = tracker.getUser(u);
 		
@@ -211,21 +187,7 @@ void ofApp::draw()
 		ofSetHexColor(0xffffff);
 	}
 	
-	if (showDebugging){
-		tracker.draw();
-//		ofDrawBitmapString("X Bounds: " + ofToString(centerMinX) + ", " + ofToString(centerMaxX), 20, ofGetHeight() - 210);
-//		ofDrawBitmapString("Y Bounds: " + ofToString(centerMinY) + ", " + ofToString(centerMaxY), 20, ofGetHeight() - 200);
-//		ofDrawBitmapString("Z Bounds: " + ofToString(centerMinZ) + ", " + ofToString(centerMaxZ), 20, ofGetHeight() - 180);
-		ofDrawBitmapString("RAW_DEPTH (e): " + ofToString(RAW_DEPTH), 20, ofGetHeight() - 160);
-		ofDrawBitmapString("TRANSLATE_Y (r+/f-): " + ofToString(TRANSLATE_Y), 20, ofGetHeight() - 140);
-		ofDrawBitmapString("TRANSLATE_X (t+/g-): " + ofToString(TRANSLATE_X), 20, ofGetHeight() - 120);
-		ofDrawBitmapString("ZOOM (y+/h-): " + ofToString(ZOOM), 20, ofGetHeight() - 100);
-		ofDrawBitmapString("TOLERANCE (u+/j-): " + ofToString(TOLERANCE), 20, ofGetHeight() - 80);
-		ofDrawBitmapString("NEAR (i+/k-): " + ofToString(NEAR), 20, ofGetHeight() - 60);
-		ofDrawBitmapString("FAR (o+/l-): " + ofToString(FAR), 20, ofGetHeight() - 40);
-		ofDrawBitmapString("Tracker FPS: "+ofToString(tracker.getFrameRate()),20,ofGetHeight()-20);
-		ofDrawBitmapString("Application FPS: "+ofToString(ofGetFrameRate()),20,ofGetHeight());
-	}
+	gui.draw();
 }
 
 //--------------------------------------------------------------
@@ -236,35 +198,7 @@ void ofApp::keyPressed(int key)
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key)
 {
-	if (key == 'd') {
-		showDebugging = !showDebugging;
-	} else if (key == 'i') {
-		NEAR += 100;
-	} else if (key == 'k') {
-		NEAR -= 100;
-	} else if (key == 'o') {
-		FAR += 100;
-	} else if (key == 'l') {
-		FAR -= 100;
-	} else if (key == 'u') {
-	   TOLERANCE += 0.05;
-	} else if (key == 'j') {
-	   TOLERANCE -= 0.05;
-	} else if (key == 'y') {
-		ZOOM += 0.05;
-	}  else if (key == 'h') {
-		ZOOM -= 0.05;
-    } else if (key == 't') {
-		TRANSLATE_X += 20;
-	} else if (key == 'g') {
-		TRANSLATE_X -= 20;
-	} else if (key == 'r') {
-		TRANSLATE_Y += 20;
-	} else if (key == 'f') {
-		TRANSLATE_Y -= 20;
-	} else if (key == 'e') {
-		RAW_DEPTH = !RAW_DEPTH;
-	}
+
 }
 
 //--------------------------------------------------------------
