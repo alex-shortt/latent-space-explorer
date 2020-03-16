@@ -97,8 +97,8 @@ void ofApp::setup()
 	gui.add(RAW_DEPTH.setup("Raw Depth", false));
 	gui.add(TRANSLATE.setup("Translate", {-72.7, 31.3}, {-200, -200}, {200, 200}));
 	gui.add(ZOOM.setup("Zoom", 2.33, 0.7, 3));
-	gui.add(DEPTH.setup("Depth (NEAR, FAR)", {-900, 3385}, {-1000, 500}, {1000, 4500}));
-	gui.add(DEPTH_TOLERANCE.setup("Depth Tolerance", 0.8f, 0, 1));
+	gui.add(DEPTH.setup("Depth (NEAR, FAR)", {-800, 3200}, {-1000, 500}, {1000, 4500}));
+	gui.add(DEPTH_TOLERANCE.setup("Depth Tolerance", 0.65f, 0, 1));
 		
 	// Latent Space data
 	latentSpace.setXBounds(-700, 450);
@@ -190,10 +190,9 @@ void ofApp::draw()
 		result.mirror(false, true);
 		result.draw(0,0);
 	
-		drawUsers(tracker);
-		
 		// draw tracker
 		if(showDebug){
+			drawUsers(tracker);
 			tracker.draw();
 		}
     fbo.end();

@@ -7,6 +7,16 @@
 
 #include "LatentSpace.hpp"
 
+void loadDoubleImage(ofImage &dest, ofImage &source){
+	for (int y = 0; y < source.getHeight(); y++) {
+		for (int x = 0; x < source.getWidth(); x++) {
+			ofColor c = source.getColor(x, y);
+			dest.setColor(x, y, c);
+			dest.setColor(399 - x, y, c);
+		}
+	}
+}
+
 LatentSpace::LatentSpace(string directory) {
 	outDir = directory;
 	position = ofVec3f(0.0f, 0.0f, 0.0f);
@@ -14,8 +24,7 @@ LatentSpace::LatentSpace(string directory) {
 	yBounds = ofVec2f(0, 1);
 	zBounds = ofVec2f(0, 1);
 	
-	image.allocate(200, 200, OF_IMAGE_COLOR);
-	image.load(outDir + "/0.0-0.0-0.0.jpg");
+	image.allocate(400, 200, OF_IMAGE_COLOR);
 }
 
 void LatentSpace::updatePosition(ofVec3f pos) {
@@ -48,7 +57,12 @@ void LatentSpace::updatePosition(float x, float y, float z){
 	if(newPos.distance(position) > 0){
 		position.set(newPos);
 		string path = getImagePath();
-		image.load(path);
+		ofImage newImage;
+		newImage.load(path);
+		
+		// copy over image, mirror over the middle for 2x1 aspect ratio
+		loadDoubleImage(image, newImage);
+	
 		image.update();
 	}
 }
@@ -57,11 +71,12 @@ void drawIndicator(float x, float y, float val){
 	float barWidth = 200;
 	float barHeight = 20;
 	float indicatorWidth = 6;
+	float xPos = ofGetScreenWidth() - barWidth - 20;
 	
 	ofSetHexColor(0xff0000);
-	ofDrawRectangle(x, y, barWidth, barHeight);
+	ofDrawRectangle(xPos, y, barWidth, barHeight);
 	ofSetHexColor(0xffffff);
-	ofDrawRectangle(x + (val * barWidth) - (indicatorWidth / 2.0) , y, indicatorWidth, barHeight);
+	ofDrawRectangle(xPos + (val * barWidth) - (indicatorWidth / 2.0) , y, indicatorWidth, barHeight);
 }
 
 void LatentSpace::drawDebug(){
@@ -74,7 +89,7 @@ void LatentSpace::drawDebug(){
 	
 	// draw image path
 	ofSetHexColor(0xff0000);
-	ofDrawBitmapString(getImagePath(), 20, 120);
+	ofDrawBitmapString(getImagePath(), ofGetScreenWidth() - 120, 120);
 	
 	ofPopStyle();
 }
