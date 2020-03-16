@@ -20,6 +20,8 @@ class LatentSpace {
 		void setXBounds(float min, float max) { xBounds = ofVec2f(min, max); }
 		void setYBounds(float min, float max) { yBounds = ofVec2f(min, max); }
 		void setZBounds(float min, float max) { zBounds = ofVec2f(min, max); }
+		void drawDebug();
+		string getImagePath();
 	
 	private:
 		// bounds
